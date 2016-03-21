@@ -40,15 +40,14 @@ int main()
     sphere_node spheres = NULL;
     color background = { 0.0, 0.1, 0.1 };
     struct timespec start, end;
-
-    pthread_t threadId[4];
-    Thread_Arg th_args[4];
     int thread_num;
     do{
   	printf("Enter thread num (must be the factor of 512) : ");
     	scanf("%d",&thread_num);
 	getchar();
     }while(512%thread_num != 0);
+    pthread_t *threadId = (pthread_t *)malloc(sizeof(pthread_t) * thread_num);
+    Thread_Arg *th_args = (Thread_Arg *)malloc(sizeof(Thread_Arg) * thread_num);
 
 #include "use-models.h"
     int p_start = 0;
@@ -77,7 +76,6 @@ int main()
     printf("# Rendering scene\n");
     /* do the ray tracing with the given geometry */
     clock_gettime(CLOCK_REALTIME, &start);
-
     for(int i = 0; i < thread_num; i++)
         pthread_create(&(threadId[i]), NULL, (void *)raytracing, (void *)&th_args[i]);
     for(int i = 0; i < thread_num; i++)
