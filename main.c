@@ -5,6 +5,7 @@
 
 #include "primitives.h"
 #include "raytracing.h"
+#include "thread_d.h"
 
 #define OUT_FILENAME "out.ppm"
 
@@ -40,29 +41,58 @@ int main()
     color background = { 0.0, 0.1, 0.1 };
     struct timespec start, end;
 
-#include "use-models.h"
+    pthread_t threadId[4];
+    Thread_Arg th_args[4];
+    int thread_num;
+    do{
+  	printf("Enter thread num (must be the factor of 512) : ");
+    	scanf("%d",&thread_num);
+	getchar();
+    }while(512%thread_num != 0);
 
-    /* allocate by the given resolution */
+#include "use-models.h"
+    int p_start = 0;
+    int num = (ROWS/1) / thread_num;
     pixels = malloc(sizeof(unsigned char) * ROWS * COLS * 3);
+    /* allocate by the given resolution */
     if (!pixels) exit(-1);
+
+    for(int i = 0; i < thread_num; i++){
+	th_args[i].threadId = i;
+    	th_args[i].pixels = pixels;
+        th_args[i].lights = lights;
+	th_args[i].rectangulars = rectangulars;
+	th_args[i].spheres = spheres;
+	th_args[i].background[0] = background[0];
+	th_args[i].background[1] = background[1];
+	th_args[i].background[2] = background[2];
+	th_args[i].view = &view;
+	th_args[i].rowStart = p_start;
+        th_args[i].colStart = 0;
+        th_args[i].rowEnd = p_start + num;
+        th_args[i].colEnd = COLS;
+        p_start += num;
+    }
 
     printf("# Rendering scene\n");
     /* do the ray tracing with the given geometry */
     clock_gettime(CLOCK_REALTIME, &start);
-    raytracing(pixels, background,
-               rectangulars, spheres, lights, &view, ROWS, COLS);
+
+    for(int i = 0; i < thread_num; i++)
+        pthread_create(&(threadId[i]), NULL, (void *)raytracing, (void *)&th_args[i]);
+    for(int i = 0; i < thread_num; i++)
+	pthread_join(threadId[i], NULL);
     clock_gettime(CLOCK_REALTIME, &end);
     {
         FILE *outfile = fopen(OUT_FILENAME, "wb");
         write_to_ppm(outfile, pixels, ROWS, COLS);
         fclose(outfile);
     }
-
     delete_rectangular_list(&rectangulars);
     delete_sphere_list(&spheres);
     delete_light_list(&lights);
     free(pixels);
     printf("Done!\n");
     printf("Execution time of raytracing() : %lf sec\n", diff_in_second(start, end));
-    return 0;
+    exit(0);
 }

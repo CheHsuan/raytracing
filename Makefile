@@ -6,11 +6,11 @@ CC ?= gcc
 CFLAGS = \
 	-std=gnu99 -Wall -O0 -g
 LDFLAGS = \
-	-lm
+	-lm 
 
 ifeq ($(strip $(PROFILE)),1)
 PROF_FLAGS = -pg
-CFLAGS += $(PROF_FLAGS)
+CFLAGS += $(PROF_FLAGS) 
 LDFLAGS += $(PROF_FLAGS) 
 endif
 
@@ -24,7 +24,7 @@ OBJS := \
 
 
 $(EXEC): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)-lpthread
 
 main.o: use-models.h
 use-models.h: models.inc Makefile
