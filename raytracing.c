@@ -504,6 +504,5 @@ void raytracing(void *ptr)
             }
         }
     }
-    printf("thread %d exit\n",arg->threadId);
     pthread_exit(0);
 }
